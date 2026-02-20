@@ -49,6 +49,7 @@ The hybrid approach:
 
 **Secure as long as EITHER component remains unbroken.**  
 This is the architecture NIST recommends.
+![0EA743C3-5D55-4760-B963-D4D3B85C832C_4_5005_c](https://github.com/user-attachments/assets/2ac2bbdb-31c6-47b8-b027-0727716bc567)
 
 ---
 
