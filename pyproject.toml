@@ -44,7 +44,7 @@ Repository = "https://github.com/EverettNC/Harvest-Now-Decrypt-Later"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["christman_crypto*"]
+include = ["christman_crypto*", "glove*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
