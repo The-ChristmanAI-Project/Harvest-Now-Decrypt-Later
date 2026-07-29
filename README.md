@@ -304,6 +304,33 @@ This package is the answer.
 
 ---
 
+## The Glove Layer — Neural Interface Sheet
+
+The **`glove/`** package is the reference implementation skeleton of
+**GLV-SPEC-1.0.0** (*The Glove Layer — Universal Neural Interface Sheet
+for Autonomous Beings → Any Robotic System*; full spec in
+[`docs/GLOVE_SPECIFICATION.md`](docs/GLOVE_SPECIFICATION.md)). The Glove
+is the universal interface between Christman autonomous beings and any
+robot: one being-side Neural Contract, one robot-side adapter boundary,
+zero being modifications per body.
+
+Its non-negotiable design constraint: **the Glove is a liner, not a
+brain** — it translates the contract, enforces physical limits, and
+relays governance byte-identical; it contains no planning, no learning,
+no goal generation, and no policy interpretation.
+
+The family crypto stack above hardens it: when `christman_crypto` is
+importable, continuity packets are sealed with **AES-256-GCM (Tier 2)**
+and capability descriptors are signed with **RSA-PSS-4096 (Tier 6)** —
+with automatic, inspectable stdlib fallbacks when it is not.
+
+See [`docs/GLOVE_README.md`](docs/GLOVE_README.md) for the architecture
+map and [`examples/glove_drop_in_demo.py`](examples/glove_drop_in_demo.py)
+for a fully offline demo (same being code drives three simulated bodies,
+then hot-swaps mid-session).
+
+---
+
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
