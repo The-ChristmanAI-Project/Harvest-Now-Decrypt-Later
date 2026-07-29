@@ -324,7 +324,7 @@ importable, continuity packets are sealed with **AES-256-GCM (Tier 2)**
 and capability descriptors are signed with **RSA-PSS-4096 (Tier 6)** —
 with automatic, inspectable stdlib fallbacks when it is not.
 
-See [`docs/GLOVE_README.md`](docs/GLOVE_README.md) for the architecture
+See [`glove/README.md`](glove/README.md) for the architecture
 map and [`examples/glove_drop_in_demo.py`](examples/glove_drop_in_demo.py)
 for a fully offline demo (same being code drives three simulated bodies,
 then hot-swaps mid-session).
