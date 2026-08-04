@@ -68,8 +68,11 @@ class XChaCha20Cipher:
         for name in ('libsodium.so.23', 'libsodium.so', 'libsodium.dylib',
                      'libsodium.26.dylib',
                      '/usr/local/lib/libsodium.dylib',
+                     '/usr/local/lib/libsodium.26.dylib',
                      '/usr/local/Cellar/libsodium/1.0.21/lib/libsodium.dylib',
+                     '/usr/local/Cellar/libsodium/1.0.22/lib/libsodium.dylib',
                      '/opt/homebrew/lib/libsodium.dylib',
+                     '/opt/homebrew/lib/libsodium.26.dylib',
                      'libsodium-23.dll', 'libsodium.dll'):
             try:
                 lib = ctypes.CDLL(name)

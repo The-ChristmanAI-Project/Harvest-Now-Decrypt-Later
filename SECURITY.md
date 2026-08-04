@@ -41,8 +41,17 @@ to respond.
 
 - Tier 1 (Vigenère) is **not modern-secure**. It is included as a
   historical educational layer only. Do not use it for real secrets.
-- Tier 4/5/6 (RSA) are **classically secure but quantum-vulnerable**.
-  Shor's algorithm on a sufficiently large quantum computer will break
-  RSA. Use the PQ tier for long-term confidentiality.
+- Tier 4/5/6 classical RSA paths are **classically secure but
+  quantum-vulnerable**. Shor's algorithm on a sufficiently large quantum
+  computer will break RSA. Use the PQ tier (ML-KEM hybrid) and, when
+  available, hybrid signatures (`HybridSigner` with `oqs`) for long-term
+  HNDL resistance.
+- Tier 6 PQ signatures require optional `oqs` (liboqs). Without it,
+  `HybridSigner` degrades to classical RSA-PSS with `pq_available=False`
+  — it never pretends PQ is active.
+- `encrypt_payload` / `decrypt_payload` use a **process-local** ML-KEM
+  keypair. For multi-party or durable key management, use
+  `HybridPQCipher` with explicit encapsulation/decapsulation keys.
 - Steganography (Tier 7) hides the *existence* of a message but does
   not encrypt it. Always encrypt before hiding.
+- XChaCha20-Poly1305 requires system **libsodium**.

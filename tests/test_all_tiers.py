@@ -15,9 +15,10 @@ from christman_crypto.tiers.tier2_aes        import AESCipher
 from christman_crypto.tiers.tier3_chacha     import ChaChaCipher
 from christman_crypto.tiers.tier4_rsa        import RSACipher
 from christman_crypto.tiers.tier5_hybrid     import HybridCipher
-from christman_crypto.tiers.tier6_signatures import DigitalSigner
+from christman_crypto.tiers.tier6_signatures import DigitalSigner, HybridSigner, OQS_AVAILABLE
 from christman_crypto.postquantum            import XChaCha20Cipher, MLKEM, HybridPQCipher
 from christman_crypto.kyber                  import KyberHandshake
+from christman_crypto                        import encrypt_payload, decrypt_payload
 
 MSG   = b"The Christman AI Project - Protecting the vulnerable."
 MSG_S = "The Christman AI Project"
@@ -111,6 +112,30 @@ def test_tier6_pem_roundtrip():
     verifier = DigitalSigner.from_pem(public_pem=pub)
     assert verifier.verify(MSG, sig) is True
 
+def test_tier6_hybrid_signer_roundtrip():
+    """HybridSigner works classical-only when oqs missing; hybrid when present."""
+    s = HybridSigner(use_pq=True)
+    sig = s.sign(MSG)
+    assert s.verify(MSG, sig) is True
+    assert s.verify(b"tampered", sig) is False
+    if not OQS_AVAILABLE:
+        assert s.pq_available is False
+        assert s.mode == "classical_rsa_pss"
+    else:
+        assert s.pq_available is True
+        assert s.mode == "hybrid_rsa_pss_pq"
+
+def test_tier6_hybrid_signer_classical_explicit():
+    s = HybridSigner(use_pq=False)
+    assert s.pq_available is False
+    sig = s.sign(MSG)
+    assert s.verify(MSG, sig) is True
+
+def test_encrypt_decrypt_payload():
+    ct = encrypt_payload(MSG)
+    assert ct != MSG
+    assert decrypt_payload(ct) == MSG
+
 # ── XChaCha20 (PQ layer Module 1) ────────────────────────────────────────────
 def test_xchacha20_roundtrip():
     x   = XChaCha20Cipher()
@@ -184,6 +209,9 @@ if __name__ == "__main__":
         ("Tier 6 — RSA-PSS sign/verify",       test_tier6_sign_verify),
         ("Tier 6 — RSA-PSS tamper detected",   test_tier6_tamper_detected),
         ("Tier 6 — RSA-PSS PEM roundtrip",     test_tier6_pem_roundtrip),
+        ("Tier 6 — HybridSigner roundtrip",    test_tier6_hybrid_signer_roundtrip),
+        ("Tier 6 — HybridSigner classical",    test_tier6_hybrid_signer_classical_explicit),
+        ("PQ    — encrypt/decrypt_payload",    test_encrypt_decrypt_payload),
         ("PQ    — XChaCha20 roundtrip",        test_xchacha20_roundtrip),
         ("PQ    — XChaCha20 tamper detected",  test_xchacha20_tamper_detected),
         ("PQ    — ML-KEM-512",                 lambda: test_mlkem_roundtrip(512)),

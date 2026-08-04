@@ -1,10 +1,10 @@
 [build-system]
 requires      = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name        = "christman-crypto"
-version     = "1.0.0"
+version     = "1.0.1"
 description = "Seven-tier hybrid cryptographic stack — Vigenère through post-quantum ML-KEM. The Christman AI Project."
 readme      = "README.md"
 license     = { file = "LICENSE" }
@@ -12,7 +12,7 @@ authors     = [{ name = "Everett Christman", email = "everett@christmanaai.org" 
 keywords    = [
     "cryptography", "post-quantum", "ml-kem", "kyber", "fips-203",
     "aes-256-gcm", "chacha20", "xchacha20", "rsa", "steganography",
-    "hybrid-encryption", "christman"
+    "hybrid-encryption", "christman", "hndl"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -33,14 +33,15 @@ dependencies    = [
 ]
 
 [project.optional-dependencies]
-steg = ["Pillow>=10.0"]
-kyber = ["kyber-py>=0.3"]
-all  = ["Pillow>=10.0", "kyber-py>=0.3"]
-dev  = ["pytest>=7.0", "Pillow>=10.0"]
+steg   = ["Pillow>=10.0"]
+kyber  = ["kyber-py>=0.3"]
+pq-sig = ["oqs>=0.10.0"]
+all    = ["Pillow>=10.0", "kyber-py>=0.3", "oqs>=0.10.0"]
+dev    = ["pytest>=7.0", "Pillow>=10.0"]
 
 [project.urls]
-Homepage   = "https://github.com/EverettNC/Harvest-Now-Decrypt-Later"
-Repository = "https://github.com/EverettNC/Harvest-Now-Decrypt-Later"
+Homepage   = "https://github.com/The-ChristmanAI-Project/Harvest-Now-Decrypt-Later"
+Repository = "https://github.com/The-ChristmanAI-Project/Harvest-Now-Decrypt-Later"
 
 [tool.setuptools.packages.find]
 where = ["."]

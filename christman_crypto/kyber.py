@@ -23,33 +23,35 @@ try:
     logger.info("ML-KEM backend: kyber_py (installed)")
 except ImportError:
     try:
-        import sys
-        _here = os.path.dirname(os.path.abspath(__file__))
-        if _here not in sys.path:
-            sys.path.insert(0, _here)
-        from christman_crypto.postquantum import MLKEM as _MLKEM_IMPL
+        from .postquantum import MLKEM as _MLKEM_IMPL
         _BACKEND = "pq_layer"
         logger.info("ML-KEM backend: pq_layer (built-in FIPS 203)")
-    except ImportError:
-        raise ImportError("No ML-KEM backend. pip install kyber-py or add pq_layer.py")
+    except ImportError as exc:
+        raise ImportError(
+            "No ML-KEM backend. Install kyber-py or ensure postquantum.py is present."
+        ) from exc
+
 
 class _MLKEMAdapter:
+    """Adapt pure-Python MLKEM to the kyber_py-style encaps API (ss, ct)."""
+
     def __init__(self, level: int):
         self._kem = _MLKEM_IMPL(level)
         self._level = level
 
-    def keygen(self) -> Tuple :
+    def keygen(self) -> Tuple[bytes, bytes]:
         return self._kem.keygen()
 
-    def encaps(self, ek: bytes) -> Tuple :
+    def encaps(self, ek: bytes) -> Tuple[bytes, bytes]:
         ct, ss = self._kem.encapsulate(ek)
-        return ss, ct  # kyber_py order
+        return ss, ct  # kyber_py order: shared_secret, ciphertext
 
     def decaps(self, dk: bytes, ct: bytes) -> bytes:
         return self._kem.decapsulate(dk, ct)
 
     def __repr__(self):
-        return f"ML_KEM_{self._level} "
+        return f"ML_KEM_{self._level}"
+
 
 if _BACKEND == "kyber_py":
     ML_KEM_512 = _KP_512

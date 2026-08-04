@@ -24,7 +24,7 @@ Tier 2  │ SYMMETRIC     │ AES-256-GCM              (authenticated encryption
 Tier 3  │ STREAM        │ ChaCha20-Poly1305         (high-speed authenticated stream)
 Tier 4  │ ASYMMETRIC    │ RSA-4096 + OAEP           (public-key encryption)
 Tier 5  │ HYBRID        │ RSA + AES-256-GCM         (envelope encryption)
-Tier 6  │ SIGNATURES    │ RSA-PSS                   (non-repudiation)
+Tier 6  │ SIGNATURES    │ RSA-PSS + optional PQ hybrid (ML-DSA / Falcon)
 Tier 7  │ STEGANOGRAPHY │ LSB Text-in-Image         (hide the existence)
 ────────┼───────────────┼──────────────────────────────────────────────────
 PQ      │ POST-QUANTUM  │ ML-KEM-768 + XChaCha20-Poly1305  (NIST FIPS 203)
@@ -80,6 +80,9 @@ pip install "christman-crypto[steg]"
 
 # With compiled kyber-py backend (faster ML-KEM)
 pip install "christman-crypto[kyber]"
+
+# With post-quantum signatures (Tier 6 hybrid — requires liboqs)
+pip install "christman-crypto[pq-sig]"
 
 # Everything
 pip install "christman-crypto[all]"
@@ -195,21 +198,25 @@ Output:
 
   ALL TIERS COMPLETE
 ```
-## Tier 6 Upgrade – Quantum Can Suck It
+## Tier 6 — Hybrid signatures
 
-We took the rock-solid RSA-PSS baseline...  
-and said **fuck quantum attacks**.
+- Classical **RSA-PSS-4096** always available (`DigitalSigner`, `HybridSigner(use_pq=False)`).
+- Optional **ML-DSA / Falcon** via `oqs` when installed (`pip install christman-crypto[pq-sig]`).
+- **Hybrid mode** (default `use_pq=True`): signs with both classical + PQ; verify requires both.
+- If `oqs` is missing, `HybridSigner` stays classical and sets `pq_available=False` (honest).
 
-New in this version:
-- Classical RSA-PSS-4096 (your original, polished & FIPS-friendly)
-- Post-quantum Dilithium5 + Falcon-1024 (NIST-approved ML-DSA & FN-DSA)
-- **Hybrid mode** — signs with both, bundles them together
-- Default: quantum-safe (use_pq=True) with classical fallback
+```python
+from christman_crypto import HybridSigner, encrypt_payload, decrypt_payload
 
-Harvest-Now-Decrypt-Later crew just got permanently retired.  
-This is Tier 6 on steroids — built for silicon + carbon happiness first.
+s = HybridSigner(use_pq=True)
+sig = s.sign(b"document")
+assert s.verify(b"document", sig)
 
-See `tier6_signatures.py` for the full muscle.
+blob = encrypt_payload(b"voicepack bytes")
+plain = decrypt_payload(blob)
+```
+
+See `christman_crypto/tiers/tier6_signatures.py`.
 ---
 
 ## Run the tests
