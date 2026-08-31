@@ -7,7 +7,8 @@ Classical baseline: RSA-PSS-4096 with SHA-256 (cryptography library).
 Optional PQ: ML-DSA / Falcon via liboqs (`oqs` package) when installed.
 
 Hybrid mode signs with BOTH classical and PQ, and verifies BOTH.
-Secure as long as either scheme remains unbroken (HNDL posture).
+This is the authenticity clock (Shor forges RSA). Confidentiality against
+Harvest Now, Decrypt Later is the ML-KEM seal in postquantum.py, not this file.
 
 Dependencies:
   cryptography >= 41.0   (required — RSA-PSS)
@@ -293,24 +294,18 @@ class HybridSigner:
 
     def keygen(self) -> dict:
         """
-        Regenerate keys. Returns a dict of PEM / PQ material.
+        Export the keys currently on this instance.
 
-        Keys are stored on this instance for subsequent sign/verify.
+        Does not mint a new pair. Construct a new HybridSigner to rotate.
         """
-        self.classic = DigitalSigner.generate_keypair()
-        result = {
+        return {
             "mode": self.mode,
             "classic_public_pem": self.classic.export_public_pem(),
             "classic_private_pem": self.classic.export_private_pem(),
-            "pq_public": None,
-            "pq_secret": None,
+            "pq_public": self._pq_pk,
+            "pq_secret": self._pq_sk,
             "pq_available": self.pq_available,
         }
-        if self.pq_available and self.pq is not None:
-            self._pq_pk, self._pq_sk = self.pq.keygen()
-            result["pq_public"] = self._pq_pk
-            result["pq_secret"] = self._pq_sk
-        return result
 
     def sign(self, message: bytes) -> bytes:
         """

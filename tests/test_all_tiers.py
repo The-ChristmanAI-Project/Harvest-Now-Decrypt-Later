@@ -16,6 +16,7 @@ from christman_crypto.tiers.tier3_chacha     import ChaChaCipher
 from christman_crypto.tiers.tier4_rsa        import RSACipher
 from christman_crypto.tiers.tier5_hybrid     import HybridCipher
 from christman_crypto.tiers.tier6_signatures import DigitalSigner, HybridSigner, OQS_AVAILABLE
+from christman_crypto.tiers.tier7_steg       import LSBSteganography
 from christman_crypto.postquantum            import XChaCha20Cipher, MLKEM, HybridPQCipher
 from christman_crypto.kyber                  import KyberHandshake
 from christman_crypto                        import encrypt_payload, decrypt_payload
@@ -131,6 +132,50 @@ def test_tier6_hybrid_signer_classical_explicit():
     sig = s.sign(MSG)
     assert s.verify(MSG, sig) is True
 
+def test_tier6_keygen_exports_current_keys():
+    # keygen() must export the pair that signed, not mint a new one.
+    signer = HybridSigner(use_pq=False)
+    sig = signer.sign(MSG)
+    keys = signer.keygen()
+    other = HybridSigner(
+        use_pq=False,
+        classic=DigitalSigner.from_pem(public_pem=keys["classic_public_pem"]),
+    )
+    assert other.verify(MSG, sig) is True
+    assert other.verify(b"tampered", sig) is False
+
+def test_tier6_independent_verify_uses_supplied_classic():
+    signer = HybridSigner(use_pq=False)
+    sig = signer.sign(MSG)
+    pk = signer.export_public_pem()
+    other = HybridSigner(
+        use_pq=False,
+        classic=DigitalSigner.from_pem(public_pem=pk),
+    )
+    stranger = HybridSigner(use_pq=False)
+    assert other.verify(MSG, sig) is True
+    assert stranger.verify(MSG, sig) is False
+
+def _pillow_available() -> bool:
+    try:
+        from PIL import Image  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+def test_tier7_steg_roundtrip():
+    if not _pillow_available():
+        pytest.skip("Pillow not installed")
+    from PIL import Image
+    import io
+    img = Image.new("RGB", (100, 100), color=(200, 200, 200))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    secret = "Harvest Now. Decrypt Later. — Everett Christman"
+    steg = LSBSteganography()
+    stego = steg.hide(buf.getvalue(), secret)
+    assert steg.extract(stego) == secret
+
 def test_encrypt_decrypt_payload():
     ct = encrypt_payload(MSG)
     assert ct != MSG
@@ -211,6 +256,9 @@ if __name__ == "__main__":
         ("Tier 6 — RSA-PSS PEM roundtrip",     test_tier6_pem_roundtrip),
         ("Tier 6 — HybridSigner roundtrip",    test_tier6_hybrid_signer_roundtrip),
         ("Tier 6 — HybridSigner classical",    test_tier6_hybrid_signer_classical_explicit),
+        ("Tier 6 — keygen exports current keys", test_tier6_keygen_exports_current_keys),
+        ("Tier 6 — independent verify",        test_tier6_independent_verify_uses_supplied_classic),
+        ("Tier 7 — LSB steganography roundtrip", test_tier7_steg_roundtrip),
         ("PQ    — encrypt/decrypt_payload",    test_encrypt_decrypt_payload),
         ("PQ    — XChaCha20 roundtrip",        test_xchacha20_roundtrip),
         ("PQ    — XChaCha20 tamper detected",  test_xchacha20_tamper_detected),
@@ -227,7 +275,7 @@ if __name__ == "__main__":
     print("  christman_crypto — Full Test Suite")
     print("  The Christman AI Project")
     print("═" * 70)
-    passed = failed = 0
+    passed = failed = skipped = 0
     for name, fn in tests:
         t0 = time.perf_counter()
         try:
@@ -238,7 +286,13 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"  ✗  {name:<45} FAILED: {e}")
             failed += 1
+        except BaseException as e:
+            if e.__class__.__name__ == "Skipped":
+                print(f"  –  {name:<45} skipped: {e}")
+                skipped += 1
+                continue
+            raise
     print("═" * 70)
-    print(f"  {passed} passed  |  {failed} failed")
+    print(f"  {passed} passed  |  {failed} failed  |  {skipped} skipped")
     print("═" * 70 + "\n")
     sys.exit(0 if failed == 0 else 1)

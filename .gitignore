@@ -1,14 +1,14 @@
 *.pyc
 __pycache__/
-__pycache__/
-*.pyc
 *.pyo
 .env
 *.log
 .DS_Store
 *.lock
 # build artifacts
-tcap_compute.egg-info/
+*.egg-info/
+dist/
+build/
 
 # lockfiles: uv.lock IS tracked for reproducible installs
 !uv.lock
