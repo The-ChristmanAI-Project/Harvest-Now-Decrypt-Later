@@ -10,9 +10,17 @@ from a Vigenère cipher written in 1553 to NIST FIPS 203 post-quantum
 ML-KEM published in 2024 — built as the security layer for the  
 [Christman AI Project](https://github.com/EverettNC/RileyChristman).
 
-This is not a toy. Every tier is a real, working implementation.  
-The PQ layer is a pure-Python FIPS 203 reference implementation  
-with zero dependencies beyond Python's standard library.
+This is not a toy. Every tier is a real, working implementation.
+
+**What is Python-locked:** ML-KEM-768 in `postquantum.py` is a pure-Python  
+NIST FIPS 203 reference. That is the Harvest Now, Decrypt Later seal.  
+A quantum computer does not care what language the KEM was written in.
+
+**What is not stdlib:**
+- Tiers 2–6 use the `cryptography` package
+- XChaCha20-Poly1305 uses **libsodium** (system library)
+- Tier 7 needs Pillow; optional faster KEM is `kyber-py`; optional  
+  hybrid signatures need `oqs` / liboqs
 
 ---
 
@@ -72,8 +80,8 @@ running Shor's algorithm cannot break.
 ## Install
 
 ```bash
-# Core (Tiers 1–6 + PQ layer)
-pip install christman-crypto
+# Core (Tiers 1–6 + PQ layer) — 1.1.0 is the Python-lock release
+pip install "christman-crypto>=1.1.0"
 
 # With steganography (Tier 7)
 pip install "christman-crypto[steg]"
@@ -180,7 +188,7 @@ Output:
   christman_crypto — Seven-Tier + Post-Quantum Demo
   The Christman AI Project  |  Apache 2.0
 ══════════════════════════════════════════════════════════════════════
-  Message: Harvest Now, Decrypt Later — The Christman AI Project.
+  Message: Harvest Now, Decrypt Later -- The Christman AI Project.
 
   Tier 1 — LEGACY — Vigenère (George-loop enhanced)
   ✓  Encrypted: PVCFWJAQAX...
@@ -231,7 +239,7 @@ Or directly:
 python tests/test_all_tiers.py
 ```
 
-23 tests covering every tier including:
+31 tests covering every tier including:
 - Round-trip encrypt/decrypt
 - Tamper detection (authentication tag verification)
 - ML-KEM implicit rejection (bad ciphertext → unpredictable output)
@@ -253,7 +261,7 @@ christman_crypto/
     ├── tier3_chacha.py       # ChaCha20-Poly1305
     ├── tier4_rsa.py          # RSA-4096 + OAEP
     ├── tier5_hybrid.py       # RSA + AES-256-GCM envelope
-    ├── tier6_signatures.py   # RSA-PSS digital signatures
+    ├── tier6_signatures.py   # RSA-PSS + optional ML-DSA/Falcon hybrid
     └── tier7_steg.py         # LSB steganography (Pillow)
 ```
 

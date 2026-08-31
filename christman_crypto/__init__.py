@@ -20,7 +20,7 @@ License: Apache 2.0
 
 from __future__ import annotations
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __author__ = "Everett Christman"
 __project__ = "The Christman AI Project"
 
@@ -39,9 +39,23 @@ from .tiers.tier6_signatures import (
     bundle_hybrid,
     unbundle_hybrid,
 )
-from .tiers.tier7_steg import LSBSteganography
 from .postquantum import XChaCha20Cipher, MLKEM, HybridPQCipher
 from .kyber import KyberHandshake
+
+_LAZY_IMPORTS = {
+    "LSBSteganography": (".tiers.tier7_steg", "LSBSteganography"),
+}
+
+
+def __getattr__(name: str):
+    if name in _LAZY_IMPORTS:
+        module_path, attr = _LAZY_IMPORTS[name]
+        import importlib
+        module = importlib.import_module(module_path, __package__)
+        value = getattr(module, attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # ── Convenience payload protectors (process-local HNDL hybrid) ───────────────
 # encrypt_payload / decrypt_payload use a process-scoped ML-KEM-768 keypair.
