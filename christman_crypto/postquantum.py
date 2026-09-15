@@ -333,11 +333,12 @@ def _decode(data: bytes, bits: int) -> list:
 
 def _compress(x: int, d: int) -> int:
     """FIPS 203 Compress_d: maps Zq -> Z_{2^d}."""
-    return round((2**d / Q) * x) % (2**d)
+    # FIPS 203 rounds half UP; Python's round() is half-to-even. Integer math.
+    return (((x << d) + (Q >> 1)) // Q) % (2**d)
 
 def _decompress(x: int, d: int) -> int:
     """FIPS 203 Decompress_d: maps Z_{2^d} -> Zq."""
-    return round((Q / 2**d) * x) % Q
+    return ((Q * x + (1 << (d - 1))) >> d) % Q
 
 def _compress_poly(p: list, d: int) -> list:
     return [_compress(c, d) for c in p]
@@ -352,7 +353,8 @@ def _sample_ntt(seed: bytes, i: int, j: int) -> list:
     FIPS 203 SampleNTT -- sample a uniform random polynomial in NTT domain
     from a 32-byte seed using SHAKE-128.
     """
-    xof    = hashlib.shake_128(seed + bytes([i, j]))
+    # FIPS 203 Alg 13 line 6: A_hat[i,j] <- SampleNTT(rho || j || i)  -- j first.
+    xof    = hashlib.shake_128(seed + bytes([j, i]))
     stream = xof.digest(840)  # enough bytes for rejection sampling
     poly, idx = [], 0
     while len(poly) < N and idx + 2 < len(stream):
@@ -434,7 +436,10 @@ class MLKEM:
         """
         k, eta1 = self.k, self.eta1
         d   = os.urandom(32)
-        rho, sigma = hashlib.sha3_512(d).digest()[:32], hashlib.sha3_512(d).digest()[32:]
+        # FIPS 203 Alg 13 line 1: (rho, sigma) <- G(d || k)  -- the k byte is
+        # domain separation across parameter sets. Omitting it breaks interop.
+        _g = hashlib.sha3_512(d + bytes([k])).digest()
+        rho, sigma = _g[:32], _g[32:]
 
         # Generate public matrix A_hat (k x k matrix of NTT polynomials)
         A_hat = [[_sample_ntt(rho, i, j) for j in range(k)] for i in range(k)]
